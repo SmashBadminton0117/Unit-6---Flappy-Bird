@@ -1,0 +1,68 @@
+// Flappy Bird - Programming 11 - Unit 6 Project
+// June 10th, 2025
+// Lawrence Mo
+
+//GIF Image Background
+PImage[] backgroundFlappyGIF;
+int numberOfFrames;
+int f;
+
+//Player Variables:
+int fx, fy, g, Vfy;
+
+//setUp starts here:
+void setup() {
+  //Canvas Size:
+  size(1400, 800);
+
+  //Zoom Background:
+  numberOfFrames = 151;
+  backgroundFlappyGIF = new PImage[ numberOfFrames ];
+
+  int f = 0;
+  while ( f < numberOfFrames ) { 
+    backgroundFlappyGIF[f] = loadImage("frame_"+f+"_delay-0.01s.gif");
+    f++;
+  }
+  
+  //Player Variables:
+  fx = width / 2;
+  fy = height / 2;
+  g = 1;
+  
+} //setUp ends here: ----------------------------------------------------------------------------------
+
+
+// void draw starts here:
+void draw() {
+  backgroundOfCityViews();
+  
+  flappyBird();
+  fy += Vfy;
+  Vfy += g;
+    
+} // draw ends here: -----------------------------------------------------------------------------------
+
+
+
+void flappyBird() {
+  circle(fx, fy, 50);
+}
+
+
+// Function to drawBackground for the canvas:
+void backgroundOfCityViews() {
+  //Background drawing of the Flappy Bird
+  image(backgroundFlappyGIF[f], 0, 0, width, height);
+  if (frameCount % 4 == 0) {
+    f++;
+  }
+
+  if (f == numberOfFrames) f = 0;
+} //Ends here: ------------------------------------------------------------------------------------------
+
+
+// mousePressed starts here:
+void mousePressed() {
+  Vfy = -15;
+} //mousedPressed for the jumps + the movements: -------------------------------------------------------
