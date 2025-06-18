@@ -198,18 +198,16 @@ void drawAndMovePipes() {
       topPipeY[i] = int(random(-400, -100));
     }
 
+    //The floats of the pipe positions:
     float PositionOfPipeX = PositionXPipe[i] / s;
     float TopOfPipeY = topPipeY[i];
     float TopBottomGap = TopOfPipeY + TopPipe.height + gap;
 
-    // === Top Pipe ===
+    //Images of the pipe
     image(TopPipe, PositionOfPipeX - 65, TopOfPipeY);
 
-    // === Bottom Pipe ===
-    // Draw Pipe Cap (top of bottom pipe)
     image(TopOfPipe, PositionOfPipeX - 10, TopBottomGap);
 
-    // Stretch Body from cap to bottom of screen
     float bodyHeight = (height / s) - (TopBottomGap + TopOfPipe.height);
     image(PipeBody, PositionOfPipeX, TopBottomGap + TopOfPipe.height, PipeBody.width, bodyHeight);
 
