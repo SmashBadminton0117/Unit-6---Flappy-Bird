@@ -2,6 +2,12 @@
 // June 10th, 2025
 // Lawrence Mo
 
+//To-Do List:
+//1. Gravity of the Flappy Bird
+//2. Collision between the bird and the pipes
+//3. The pipes drawing needs to be extended -- FINISHED
+
+
 //GIF Image Background
 PImage[] backgroundFlappyGIF;
 int numberOfFrames;
@@ -10,19 +16,80 @@ int f;
 //PNG Image Flappy Bird:
 PImage FlappyBird;
 
+//Pipe Images:
+PImage TopPipe, BottomPipe;
+
+//Stretching the Pipes to match the background:
+PImage TopOfPipe, PipeBody;
+
+
+// Pipe positions:
+// Array list:
+int n = 5;
+int gap = 370;
+int[] PositionXPipe = new int[n];
+int[] topPipeY = new int[n];
+
 //Player Variables:
 int fx, fy, g, Vfy;
 
 //Control: spaceKey
 boolean spaceKey;
 
+//points system:
+int points;
+
+//Mode Frameworks of the.. StartingScreen + EndingScreen:
+int mode;
+final int StartingScreen = 1;
+final int FlappyBirdGame = 2;
+final int EndingScreen = 3;
+//final int PausingTheCurrentScreen = 5;
+
+//Starting Position:
+final int WaitingToStart = 4;
+float waitingTimer = 0;
+
+
+//Fonts for the flappybird:
+PFont  FontsFlappy;
+PFont  DefaultFont;
+
+//The INT + FLOAT ENds here: ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 //setUp starts here:
 void setup() {
   //Canvas Size:
   size(1400, 800);
 
+  //Mode Frameworks:
+  mode = StartingScreen;
+
+  //points system:
+  points = 0;
+
+  //Fonts:
+  DefaultFont = createFont("Arial", 24, true);
+  FontsFlappy = createFont("FlappyBirdy.ttf", 47);
+
   //Character: Flappy Bird
   FlappyBird = loadImage("FlappyBird.png");
+
+  //Pipes for the levels:
+  TopPipe = loadImage("TopPipeFlappyBird.png");
+
+  //Images of Pipe Cap + Cap Body:
+  TopOfPipe = loadImage("TopOfPipeFlappyBird.png");
+  PipeBody = loadImage("BodyOfPipesFlappyBird.png");
+
+  int i = 0;
+  int spacing = 500;
+  while (i < n) {
+    PositionXPipe[i] = width + i * spacing;
+    topPipeY[i] = int(random(-400, -100));
+    i++;
+  }
 
   //Zoom Background:
   numberOfFrames = 151;
@@ -34,32 +101,49 @@ void setup() {
     f++;
   }
 
+  if ( f == numberOfFrames ) {
+    f = 0;
+  }
+
   //Player Variables:
   fx = width / 2;
   fy = height / 2;
   g = 1;
+  f = 0;
 } //setUp ends here: ----------------------------------------------------------------------------------
+
+
 
 
 // void draw starts here:
 void draw() {
-  //background GIF:
-  backgroundOfCityViews();
+  if (mode == StartingScreen) {
+    StartingScreen();
+  } else if (mode == WaitingToStart) {
+    backgroundOfCityViews();
 
-  //flappyBird Gravity:
-  flappyBird();
-  fy += Vfy;
-  Vfy += g;
+    //Offset of the Flappy Bird's movements:
+    float floatOffset = sin(waitingTimer) * 10;
+    image(FlappyBird, fx, fy + floatOffset);
 
-  //spaceBar movements:
-  flappyBirdMovements();
+    //Changes for the timer
+    waitingTimer += 0.05;
+  } else if (mode == FlappyBirdGame) {
+    FlappyBirdGame();
+  } else if (mode == EndingScreen) {
+    EndingScreen();
+  }
 } // draw ends here: -----------------------------------------------------------------------------------
 
 
-
+// FlappyBird starts here:
 void flappyBird() {
   image(FlappyBird, fx, fy);
-}
+  fy += Vfy;
+  Vfy += g;
+
+  fy = constrain(fy, -200, height - FlappyBird.height);
+} // Ends here: ---------------------------------------------------------------------------------------
 
 
 // Function to drawBackground for the canvas:
@@ -74,13 +158,63 @@ void backgroundOfCityViews() {
 } //Ends here: ------------------------------------------------------------------------------------------
 
 
-void flappyBirdMovements() {
-  //spaceKey for Interactions:
-  if ( spaceKey == true ) Vfy = -9;
-} // end of flappyBirdMovements: -----------------------------------------------------------------------
 
 
 // mousePressed starts here:
 void mousePressed() {
+  if (mode == StartingScreen) {
+    mode = WaitingToStart;
+    fx = width / 2;
+    fy = height / 2;
+    Vfy = 0;
+  } else if (mode == WaitingToStart) {
+    mode = FlappyBirdGame;
     Vfy = -15;
+    //} else if ( mode == PausingTheCurrentScreen ) {
+    //  pausescreen();
+  } else if (mode == FlappyBirdGame) {
+    Vfy = -15;
+  }
 } //mousedPressed for the jumps + the movements: -------------------------------------------------------
+
+
+
+
+// drawAndMovePipes starts here:
+void drawAndMovePipes() {
+  //The variables of the drawAndMovePipes:
+  float s = 0.6;
+
+
+  pushMatrix();
+  scale(s);
+
+  int i = 0;
+  while (i < n) {
+    PositionXPipe[i] -= 5;
+
+    if (PositionXPipe[i] < -TopPipe.width * s) {
+      PositionXPipe[i] = int(width / s);
+      topPipeY[i] = int(random(-400, -100));
+    }
+
+    float PositionOfPipeX = PositionXPipe[i] / s;
+    float TopOfPipeY = topPipeY[i];
+    float TopBottomGap = TopOfPipeY + TopPipe.height + gap;
+
+    // === Top Pipe ===
+    image(TopPipe, PositionOfPipeX - 65, TopOfPipeY);
+
+    // === Bottom Pipe ===
+    // Draw Pipe Cap (top of bottom pipe)
+    image(TopOfPipe, PositionOfPipeX - 10, TopBottomGap);
+
+    // Stretch Body from cap to bottom of screen
+    float bodyHeight = (height / s) - (TopBottomGap + TopOfPipe.height);
+    image(PipeBody, PositionOfPipeX, TopBottomGap + TopOfPipe.height, PipeBody.width, bodyHeight);
+
+    i++;
+  }
+
+  popMatrix();
+} //End of drawAndMovePipes: ---------------------------------------------------------------------------
