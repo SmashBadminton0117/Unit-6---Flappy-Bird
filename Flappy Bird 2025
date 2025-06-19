@@ -50,7 +50,6 @@ final int EndingScreen = 3;
 final int WaitingToStart = 4;
 float waitingTimer = 0;
 
-
 //Fonts for the flappybird:
 PFont  FontsFlappy;
 PFont  DefaultFont;
@@ -122,11 +121,9 @@ void draw() {
   } else if (mode == WaitingToStart) {
     backgroundOfCityViews();
 
-    //Offset of the Flappy Bird's movements:
+    //Offset of the Flappy Bird + waiting timer:
     float floatOffset = sin(waitingTimer) * 10;
     image(FlappyBird, fx, fy + floatOffset);
-
-    //Changes for the timer
     waitingTimer += 0.05;
   } else if (mode == FlappyBirdGame) {
     FlappyBirdGame();
@@ -183,20 +180,17 @@ void mousePressed() {
 // drawAndMovePipes starts here:
 void drawAndMovePipes() {
   //The variables of the drawAndMovePipes:
+  int i = 0;
   float s = 0.6;
 
 
   pushMatrix();
   scale(s);
 
-  int i = 0;
   while (i < n) {
+    //Velocity of the pipelines:
     PositionXPipe[i] -= 5;
-
-    if (PositionXPipe[i] < -TopPipe.width * s) {
-      PositionXPipe[i] = int(width / s);
-      topPipeY[i] = int(random(-400, -100));
-    }
+    positionOfThePipe();
 
     //The floats of the pipe positions:
     float PositionOfPipeX = PositionXPipe[i] / s;
@@ -205,7 +199,6 @@ void drawAndMovePipes() {
 
     //Images of the pipe
     image(TopPipe, PositionOfPipeX - 65, TopOfPipeY);
-
     image(TopOfPipe, PositionOfPipeX - 10, TopBottomGap);
 
     float bodyHeight = (height / s) - (TopBottomGap + TopOfPipe.height);
@@ -216,3 +209,12 @@ void drawAndMovePipes() {
 
   popMatrix();
 } //End of drawAndMovePipes: ---------------------------------------------------------------------------
+
+void positionOfThePipe() {
+  int i = 0;
+  float s = 0.6;
+  if (PositionXPipe[i] < -TopPipe.width * s) {
+    PositionXPipe[i] = int(width / s);
+    topPipeY[i] = int(random(-400, -100));
+  }
+}
