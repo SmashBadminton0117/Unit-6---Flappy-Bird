@@ -1,11 +1,17 @@
+import processing.sound.*;
+
 // Flappy Bird - Programming 11 - Unit 6 Project
 // June 10th, 2025
 // Lawrence Mo
 
 //To-Do List:
-//1. Gravity of the Flappy Bird
-//2. Collision between the bird and the pipes
+//1. Gravity of the Flappy Bird -FINISHED
+//2. Collision between the bird and the pipes -FINISHED
 //3. The pipes drawing needs to be extended -- FINISHED
+//4. Points system -- FINISHED
+//5. Mode Framework - Starting, Ending, Game, Interaction Screens -- FINISHED
+//6. Sound effects + background theme music -- FINISHED
+
 
 
 //GIF Image Background
@@ -29,9 +35,16 @@ int n = 5;
 int gap = 370;
 int[] PositionXPipe = new int[n];
 int[] topPipeY = new int[n];
+int spacingBetweenPipes = 500;
+
+//Array list: Points system - detecting if passed or not
+boolean[] detectPassedPipes = new boolean[n];
+
+//Return pipes:
+int returnPipePosition;
 
 //Player Variables:
-int fx, fy, g, Vfy;
+int FlappyBirdX, FlappyBirdY, g, VelocityOfFlappyBirdY;
 
 //Control: spaceKey
 boolean spaceKey;
@@ -39,7 +52,10 @@ boolean spaceKey;
 //points system:
 int points;
 
-//Mode Frameworks of the.. StartingScreen + EndingScreen:
+//life system:
+int life;
+
+//Mode Frameworks of the StartingScreen + EndingScreen:
 int mode;
 final int StartingScreen = 1;
 final int FlappyBirdGame = 2;
@@ -54,6 +70,13 @@ float waitingTimer = 0;
 PFont  FontsFlappy;
 PFont  DefaultFont;
 
+//Sound effects:
+SoundFile background;
+SoundFile scoring;
+SoundFile flying;
+SoundFile dying;
+
+
 //The INT + FLOAT ENds here: ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -65,12 +88,26 @@ void setup() {
   //Mode Frameworks:
   mode = StartingScreen;
 
-  //points system:
+  //points + life system:
   points = 0;
+  life = 1;
+
+  //Sounds Files imported:
+  background = new SoundFile(this, "BackgroundMusicFlappyBird.mp3");
+  scoring = new SoundFile(this, "GaingPointsFlappyBird.mp3");
+  flying = new SoundFile(this, "WhooshFlyingFlappyBird.mp3");
+  dying = new SoundFile(this, "DyingEffectFlappyBird.mp3");
+
+  //Theme Music:
+  background.loop();
+  background.amp(1);
+  
+  //Position for spacing/layout of the pipes:
+  spacingBetweenPipes = 500;
 
   //Fonts:
   DefaultFont = createFont("Arial", 24, true);
-  FontsFlappy = createFont("FlappyBirdy.ttf", 47);
+  FontsFlappy = createFont("FlappyBirdRegular.ttf", 47);
 
   //Character: Flappy Bird
   FlappyBird = loadImage("FlappyBird.png");
@@ -83,10 +120,12 @@ void setup() {
   PipeBody = loadImage("BodyOfPipesFlappyBird.png");
 
   int i = 0;
-  int spacing = 500;
   while (i < n) {
-    PositionXPipe[i] = width + i * spacing;
+    PositionXPipe[i] = width + i * spacingBetweenPipes;
     topPipeY[i] = int(random(-400, -100));
+
+    //Setting all the pipes to "false" until detection occurs --> "true"
+    detectPassedPipes[i] = false;
     i++;
   }
 
@@ -105,42 +144,12 @@ void setup() {
   }
 
   //Player Variables:
-  fx = width / 2;
-  fy = height / 2;
+  FlappyBirdX = width / 2;
+  FlappyBirdY = height / 2;
   g = 1;
   f = 0;
 } //setUp ends here: ----------------------------------------------------------------------------------
 
-
-
-
-// void draw starts here:
-void draw() {
-  if (mode == StartingScreen) {
-    StartingScreen();
-  } else if (mode == WaitingToStart) {
-    backgroundOfCityViews();
-
-    //Offset of the Flappy Bird + waiting timer:
-    float floatOffset = sin(waitingTimer) * 10;
-    image(FlappyBird, fx, fy + floatOffset);
-    waitingTimer += 0.05;
-  } else if (mode == FlappyBirdGame) {
-    FlappyBirdGame();
-  } else if (mode == EndingScreen) {
-    EndingScreen();
-  }
-} // draw ends here: -----------------------------------------------------------------------------------
-
-
-// FlappyBird starts here:
-void flappyBird() {
-  image(FlappyBird, fx, fy);
-  fy += Vfy;
-  Vfy += g;
-
-  fy = constrain(fy, -200, height - FlappyBird.height);
-} // Ends here: ---------------------------------------------------------------------------------------
 
 
 // Function to drawBackground for the canvas:
@@ -155,66 +164,3 @@ void backgroundOfCityViews() {
 } //Ends here: ------------------------------------------------------------------------------------------
 
 
-
-
-// mousePressed starts here:
-void mousePressed() {
-  if (mode == StartingScreen) {
-    mode = WaitingToStart;
-    fx = width / 2;
-    fy = height / 2;
-    Vfy = 0;
-  } else if (mode == WaitingToStart) {
-    mode = FlappyBirdGame;
-    Vfy = -15;
-    //} else if ( mode == PausingTheCurrentScreen ) {
-    //  pausescreen();
-  } else if (mode == FlappyBirdGame) {
-    Vfy = -15;
-  }
-} //mousedPressed for the jumps + the movements: -------------------------------------------------------
-
-
-
-
-// drawAndMovePipes starts here:
-void drawAndMovePipes() {
-  //The variables of the drawAndMovePipes:
-  int i = 0;
-  float s = 0.6;
-
-
-  pushMatrix();
-  scale(s);
-
-  while (i < n) {
-    //Velocity of the pipelines:
-    PositionXPipe[i] -= 5;
-    positionOfThePipe();
-
-    //The floats of the pipe positions:
-    float PositionOfPipeX = PositionXPipe[i] / s;
-    float TopOfPipeY = topPipeY[i];
-    float TopBottomGap = TopOfPipeY + TopPipe.height + gap;
-
-    //Images of the pipe
-    image(TopPipe, PositionOfPipeX - 65, TopOfPipeY);
-    image(TopOfPipe, PositionOfPipeX - 10, TopBottomGap);
-
-    float bodyHeight = (height / s) - (TopBottomGap + TopOfPipe.height);
-    image(PipeBody, PositionOfPipeX, TopBottomGap + TopOfPipe.height, PipeBody.width, bodyHeight);
-
-    i++;
-  }
-
-  popMatrix();
-} //End of drawAndMovePipes: ---------------------------------------------------------------------------
-
-void positionOfThePipe() {
-  int i = 0;
-  float s = 0.6;
-  if (PositionXPipe[i] < -TopPipe.width * s) {
-    PositionXPipe[i] = int(width / s);
-    topPipeY[i] = int(random(-400, -100));
-  }
-}
